@@ -1,3 +1,15 @@
+import spacy
+import subprocess
+import sys
+
+# ---------- ENSURE SPACY MODEL EXISTS (FOR STREAMLIT CLOUD) ----------
+try:
+    spacy.load("en_core_web_sm")
+except OSError:
+    subprocess.check_call(
+        [sys.executable, "-m", "spacy", "download", "en_core_web_sm"]
+    )
+
 import streamlit as st
 import json
 from parse_resume import parse_resume
@@ -19,13 +31,12 @@ if uploaded_file:
     # ---------- ERROR HANDLING ----------
     try:
         parsed_data = parse_resume(temp_file_path)
-    except Exception as e:
+    except Exception:
         st.error("Failed to parse resume. Please upload a valid PDF or DOCX file.")
         st.stop()
 
     # ---------- UI LAYOUT ----------
     st.divider()
-
     col1, col2 = st.columns(2)
 
     with col1:
