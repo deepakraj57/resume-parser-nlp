@@ -4,8 +4,13 @@ import spacy
 import re
 import datetime
 
-# Load spaCy model
-nlp = spacy.load("en_core_web_sm")
+# ---------- SPAcY LAZY LOADER ----------
+
+def get_nlp():
+    global nlp
+    if "nlp" not in globals():
+        nlp = spacy.load("en_core_web_sm")
+    return nlp
 
 # ---------- TEXT EXTRACTION ----------
 
@@ -36,7 +41,7 @@ def extract_docx_text(file_path):
 
     return '\n'.join(full_text)
 
-# ---------- NAME EXTRACTION (CLEANED) ----------
+# ---------- NAME EXTRACTION ----------
 
 def extract_names(text):
     lines = text.split('\n')
@@ -51,7 +56,8 @@ def extract_names(text):
 
     # Strategy 2: spaCy NER
     top_section = text[:500]
-    doc = nlp(top_section)
+    nlp_model = get_nlp()
+    doc = nlp_model(top_section)
 
     person_entities = [ent.text for ent in doc.ents if ent.label_ == 'PERSON']
 
