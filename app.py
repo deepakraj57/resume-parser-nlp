@@ -1,42 +1,31 @@
-import spacy
-import subprocess
-import sys
-
-# ---------- ENSURE SPACY MODEL EXISTS (FOR STREAMLIT CLOUD) ----------
-try:
-    spacy.load("en_core_web_sm")
-except OSError:
-    subprocess.check_call(
-        [sys.executable, "-m", "spacy", "download", "en_core_web_sm"]
-    )
-
 import streamlit as st
 import json
 from parse_resume import parse_resume
 
-st.title("Resume Parser")
+st.set_page_config(page_title="Resume Parser", layout="centered")
+
+st.title("📄 Resume Parser")
 
 uploaded_file = st.file_uploader(
-    "Upload Resume (PDF/DOCX)",
+    "Upload Resume (PDF or DOCX)",
     type=["pdf", "docx"]
 )
 
-if uploaded_file:
-    file_extension = uploaded_file.name.split('.')[-1]
-    temp_file_path = f"uploaded_resume.{file_extension}"
+if uploaded_file is not None:
+    file_extension = uploaded_file.name.split(".")[-1].lower()
+    temp_file_path = f"/tmp/uploaded_resume.{file_extension}"
 
     with open(temp_file_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
 
-    # ---------- ERROR HANDLING ----------
     try:
         parsed_data = parse_resume(temp_file_path)
-    except Exception:
-        st.error("Failed to parse resume. Please upload a valid PDF or DOCX file.")
+    except Exception as e:
+        st.error("❌ Failed to parse resume. Please upload a valid file.")
         st.stop()
 
-    # ---------- UI LAYOUT ----------
     st.divider()
+
     col1, col2 = st.columns(2)
 
     with col1:
@@ -47,31 +36,24 @@ if uploaded_file:
 
     with col2:
         st.subheader("💼 Professional Info")
-        st.write(f"**Years of Experience:** {parsed_data['experience_years'] or 'Not found'}")
+        st.write(f"**Experience (Years):** {parsed_data['experience_years'] or 'Not found'}")
         st.write(
             f"**Job Titles:** {', '.join(parsed_data['job_titles'])}"
             if parsed_data['job_titles'] else "**Job Titles:** Not found"
         )
 
-    # ---------- SKILLS ----------
     st.divider()
+
     st.subheader("🛠 Skills")
-    if parsed_data["skills"]:
-        st.write(", ".join(parsed_data["skills"]))
-    else:
-        st.write("Not found")
+    st.write(", ".join(parsed_data["skills"]) if parsed_data["skills"] else "Not found")
 
-    # ---------- EDUCATION ----------
     st.subheader("🎓 Education")
-    if parsed_data["education"]:
-        st.write(", ".join(parsed_data["education"]))
-    else:
-        st.write("Not found")
+    st.write(", ".join(parsed_data["education"]) if parsed_data["education"] else "Not found")
 
-    # ---------- EXPORT ----------
     st.divider()
+
     st.download_button(
-        label="⬇️ Download Parsed Data (JSON)",
+        "⬇️ Download Parsed Data (JSON)",
         data=json.dumps(parsed_data, indent=2),
         file_name="parsed_resume.json",
         mime="application/json"
