@@ -1,5 +1,5 @@
 streamlit
-spacy
+spacy>=3.7,<3.8
 PyPDF2
 pdfplumber
 python-docx
